@@ -1,7 +1,7 @@
 {
-  "name": "react-redux-boilerplate",
+  "name": "game-of-life",
   "version": "1.0.0",
-  "description": "template for all React apps",
+  "description": "Conway's game of life completed for FreeCodeCamp",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -23,9 +23,6 @@
     "react-addons-css-transition-group": "^0.14.7",
     "react-dom": "^0.14.7",
     "react-loader": "^2.0.0",
-    "react-redux": "^4.4.1",
-    "redux": "^3.3.1",
-    "redux-devtools": "^3.1.1",
     "resolve-url-loader": "^1.4.3",
     "style-loader": "^0.13.0",
     "url-loader": "^0.5.7"

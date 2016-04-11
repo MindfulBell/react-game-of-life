@@ -1,13 +1,7 @@
 import React, {Component} from 'react';
 import {render} from 'react-dom';
+import Board from './components/board';
 require("../public/css/style.scss");
-
-/*
-
-Boilerplate for any react project w/redux, sass, bootstrap installed
-Please don't forget to change your remote origin!!!
-
-*/
 
 class App extends Component {
   constructor(props) {
@@ -20,7 +14,8 @@ class App extends Component {
   render() {
     return (
       <div>
-        <h1> INSERT APP HERE!</h1>
+        <h1> GAME OF LIFE </h1>
+        <Board />
       </div>
     );
   }
