@@ -13,7 +13,7 @@ class App extends Component {
 
   render() {
     return (
-      <div>
+      <div className='container container-fluid' style={{textAlign: 'center'}}>
         <h1> GAME OF LIFE </h1>
         <Board />
       </div>

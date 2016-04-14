@@ -1,14 +1,11 @@
-$size: 10; // from board
-$cellSize: 20; // from css below
 
 #board {
-	width: $size * $cellSize + $size * 2;
 	margin: 0 auto;
 }
 
 #cell {
-	height: 20px;
-	width: 20px;
+	height: 15px;
+	width: 15px;
 	border: 1px solid black;
 	display: inline-block;
 }
