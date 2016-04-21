@@ -61,6 +61,10 @@
 	
 	var _board2 = _interopRequireDefault(_board);
 	
+	var _style = __webpack_require__(/*! ../public/css/style.scss */ 164);
+	
+	var _style2 = _interopRequireDefault(_style);
+	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -68,8 +72,6 @@
 	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 	
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-	
-	__webpack_require__(/*! ../public/css/style.scss */ 164);
 	
 	var App = function (_Component) {
 	  _inherits(App, _Component);
@@ -10991,6 +10993,17 @@
 	
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 	
+	// TO DO: How do I get it to incremenet properly with a timer/setInterval?
+	// it works on a click of a button...
+	
+	// wrap the neighbors of cells on the edge...?
+	
+	// buttons to run/pause/clear
+	
+	// draw your pattern instead of click?
+	
+	// styling
+	
 	var Board = function (_Component) {
 	  _inherits(Board, _Component);
 	
@@ -11002,16 +11015,25 @@
 	    _this.state = {
 	      status: 'running',
 	      generations: 0,
-	      height: 15,
-	      width: 30,
+	      height: 4,
+	      width: 4,
 	      speed: 1000,
 	      board: [],
 	      boardWidth: 0
 	    };
 	
 	    _this.buildBoard = _this.buildBoard.bind(_this);
+	    _this.addCell = _this.addCell.bind(_this);
+	    // this.updateBoard = this.updateBoard.bind(this);
+	    _this.generation = _this.getNextGeneration.bind(_this);
+	    _this.checkNeighbors = _this.checkNeighbors.bind(_this);
+	
 	    return _this;
 	  }
+	
+	  // board has initial state
+	  // passed alive/dead to cells randomly
+	  // cells determine who their neighbors are
 	
 	  _createClass(Board, [{
 	    key: 'componentWillMount',
@@ -11024,24 +11046,145 @@
 	      var boardsize = w * 15 + w * 2; // 15 is px size of each cell (see style), 2 accounts for borders
 	      var totalCells = h * w;
 	      var Cells = [];
-	      var counter = 0;
+	      var counter = -1;
 	      for (var i = 0; i < h; i++) {
 	        for (var j = 0; j < w; j++) {
-	          var alive = Math.random() > .7 ? true : false; // .7 gives more dead than alive cells
-	          Cells.push(_react2.default.createElement(_cell2.default, { key: counter, alive: alive }) // re config this to push just a 2darray to state, and then map a board after this from that array
-	          // so this.state.board will change
-	          );
 	          counter++;
+	          var alive = Math.random() > .7 ? true : false;
+	          Cells.push([counter, alive]); //counter used to help determine 'position' for later
+	
+	          /*structure of Board: [
+	          [#, true],[#, false],[#, false],[#, true]...,
+	          [#, true],[#, false],[#, false],[#, true]...,
+	          [#, true],[#, false],[#, false],[#, true]...,
+	          [#, true],[#, false],[#, false],[#, true]...,
+	          [#, true],[#, false],[#, false],[#, true]...
+	          ]*/
 	        }
-	        counter++;
 	      }
 	      this.setState({ height: h, width: w, board: Cells, boardWidth: boardsize });
 	    }
 	  }, {
-	    key: 'render',
-	    value: function render() {
+	    key: 'addCell',
+	    value: function addCell(cellPos) {
+	      var newBoard = this.state.board.map(function (cell, ind) {
+	        return ind === cellPos ? [cell[0], !cell[1]] : cell;
+	      });
+	      this.setState({
+	        board: newBoard
+	      });
+	    }
+	  }, {
+	    key: 'checkNeighbors',
+	    value: function checkNeighbors(arr) {
+	      //check neighbors alive and return how many
+	      var alive = 0;
+	      arr.forEach(function (neighbor) {
+	        alive = neighbor[1] ? alive + 1 : alive;
+	      });
+	      return alive;
+	    }
+	
+	    // updateBoard(newBoard){
+	    //   this.setState({
+	    //     board: newBoard
+	    //   })
+	    // }
+	
+	  }, {
+	    key: 'getNextGeneration',
+	    value: function getNextGeneration() {
 	      var _this2 = this;
 	
+	      var newBoard = this.state.board.map(function (cell, _, arr) {
+	        var neighbors = [];
+	        var width = _this2.state.width;
+	        neighbors.push(arr[cell[0] - width - 1], arr[cell[0] - width], arr[cell[0] - width + 1], arr[cell[0] - 1], arr[cell[0] + 1], arr[cell[0] + width - 1], arr[cell[0] + width], arr[cell[0] + width + 1]);
+	        neighbors = neighbors.filter(function (cell) {
+	          return cell !== undefined;
+	        });
+	        var aliveNeighbors = _this2.checkNeighbors(neighbors);
+	
+	        // killing it
+	        if (cell[1] && (aliveNeighbors < 2 || aliveNeighbors > 3)) {
+	          return [cell[0], false];
+	        }
+	        //being reborn
+	        else if (!cell[1] && aliveNeighbors === 3) {
+	            return [cell[0], true];
+	          } else {
+	            return cell;
+	          }
+	      });
+	
+	      // let topLft = 0;
+	      // let topRt = width-1;
+	      // let botLft = height*width-width;
+	      // let botRt = height*width-1;
+	      // let edgeRows = width*(height-1);
+	      // let edgeCols = (height-1);
+	
+	      //WRAPPING NEIGHBORS?
+	
+	      // //corners
+	      // switch (cell[0]) {
+	      //   //corner
+	      //   case topLft:
+	      //   case topRt:
+	      //   case botLft:
+	      //   case botRt:
+	      //     neighbors.push()
+	      // }
+	
+	      // //top row
+	      // if (cell[0] >= topLft && cell[0] <= topRt) {
+	      //   neighbors.push(
+	      //   board[cell[0]+edgeRows-1],
+	      //   board[cell[0]+edgeRows],
+	      //   board[cell[0]+edgeRows+1]
+	      //   )
+	      // }
+	      // //bottom row
+	      // if (cell[0] > botLft && cell[0] < botRt) {
+	      //   neighbors.push(
+	      //   board[cell[0]-edgeRows-1],
+	      //   board[cell[0]-edgeRows],
+	      //   board[cell[0]-edgeRows+1]
+	      //   )
+	      // }
+	      // //left col
+	      // if (cell[0]%width === 0) {
+	      //   neighbors.push(
+	      //   board[cell[0]+edgeCols-width],
+	      //   board[cell[0]+edgeCols],
+	      //   board[cell[0]+edgeCols+width]
+	      //   )
+	      // }
+	      // //right col
+	      // if ((cell[0]+1)%width === 0){
+	      //   neighbors.push(
+	      //   board[cell[0]-edgeCols-width],
+	      //   board[cell[0]-edgeCols],
+	      //   board[cell[0]-edgeCols+width]
+	      //   )
+	      // }
+	      //go through each cell to check if alive/dead
+	      this.setState({ board: newBoard });
+	      return newBoard;
+	    }
+	  }, {
+	    key: 'render',
+	    value: function render() {
+	      var _this3 = this;
+	
+	      var boardView = this.state.board.map(function (cell) {
+	        return _react2.default.createElement(_cell2.default, {
+	          position: cell[0],
+	          key: cell[0],
+	          alive: cell[1],
+	          addCell: _this3.addCell
+	        });
+	      });
 	      return _react2.default.createElement(
 	        'div',
 	        null,
@@ -11050,7 +11193,9 @@
 	          { id: 'ctrl-buttons' },
 	          _react2.default.createElement(
 	            'button',
-	            null,
+	            { onClick: function onClick(e) {
+	                _this3.getNextGeneration();
+	              } },
 	            'Run'
 	          ),
 	          _react2.default.createElement(
@@ -11073,7 +11218,7 @@
 	        _react2.default.createElement(
 	          'div',
 	          { id: 'board', style: { width: this.state.boardWidth } },
-	          this.state.board
+	          boardView
 	        ),
 	        _react2.default.createElement(
 	          'div',
@@ -11081,26 +11226,31 @@
 	          _react2.default.createElement(
 	            'button',
 	            { onClick: function onClick(e) {
-	                _this2.buildBoard(15, 30);
+	                _this3.buildBoard(15, 30);
 	              } },
 	            '15 x 30'
 	          ),
 	          _react2.default.createElement(
 	            'button',
 	            { onClick: function onClick(e) {
-	                _this2.buildBoard(25, 40);
+	                _this3.buildBoard(25, 40);
 	              } },
 	            '25 x 40'
 	          ),
 	          _react2.default.createElement(
 	            'button',
 	            { onClick: function onClick(e) {
-	                _this2.buildBoard(40, 60);
+	                _this3.buildBoard(40, 60);
 	              } },
 	            '40 x 60'
 	          )
 	        )
 	      );
+	    }
+	  }, {
+	    key: 'componentDidMount',
+	    value: function componentDidMount() {
+	      this.inc = setInterval(this.getNextGeneration, this.state.speed);
 	    }
 	  }]);
 	
@@ -11144,26 +11294,27 @@
 	
 	    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(Cell).call(this, props));
 	
-	    _this.state = {
-	      alive: _this.props.alive
-	    };
+	    _this.state = {};
+	    _this.handleClick = _this.handleClick.bind(_this);
 	    return _this;
 	  }
 	
-	  //LifeCycle stuff
-	  //background color is the variable that changes based on alive/dead
-	  //so is that what changes within the lifecycle?
-	
 	  _createClass(Cell, [{
+	    key: 'handleClick',
+	    value: function handleClick(cellPos) {
+	      console.log(cellPos);
+	      this.props.addCell(cellPos);
+	    }
+	  }, {
 	    key: 'render',
 	    value: function render() {
 	      var _this2 = this;
 	
 	      return _react2.default.createElement('div', { id: 'cell',
 	        onClick: function onClick(e) {
-	          _this2.setState({ alive: !_this2.state.alive });
+	          _this2.handleClick(_this2.props.position);
 	        },
-	        style: this.state.alive ? { backgroundColor: 'orange' } : {} });
+	        style: this.props.alive ? { backgroundColor: 'orange' } : {} });
 	    }
 	  }]);
 	

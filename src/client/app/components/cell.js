@@ -4,23 +4,23 @@ class Cell extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      alive: this.props.alive
     };
+    this.handleClick = this.handleClick.bind(this)
   }
 
-  //LifeCycle stuff
-  //background color is the variable that changes based on alive/dead
-  //so is that what changes within the lifecycle?
-  
+  handleClick(cellPos){
+    console.log(cellPos)
+    this.props.addCell(cellPos)
+  }
 
   render() {
     return (
       <div id='cell'
-      onClick={(e) =>{this.setState({alive: !this.state.alive})}}
-      style={this.state.alive ? {backgroundColor: 'orange'}:{}}>
+      onClick={(e) =>{this.handleClick(this.props.position)}}
+      style={this.props.alive ? {backgroundColor: 'orange'}:{}}>
       </div>
     );
   }
 }
 
-export default Cell;
+  export default Cell;

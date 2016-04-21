@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import {render} from 'react-dom';
 import Board from './components/board';
-require("../public/css/style.scss");
+import style from '../public/css/style.scss';
 
 class App extends Component {
   constructor(props) {
