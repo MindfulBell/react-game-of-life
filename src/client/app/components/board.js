@@ -1,11 +1,14 @@
 import React, {Component} from 'react';
 import Cell from './cell';
 
-// wrap the neighbors of cells on the edge...?
+/* CONWAY'S GAME OF LIFE,  INFO HERE: https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life 
 
-// draw your pattern instead of click?
+1. Build initial board in willMount
+2. Start interval of getNextGeneration in didMount that is responsible for it functioning
+  2a. in getNextGeneration, build arr of neighbors for each cell to determine if it lives/dies     
+3. pass alive/dead to individual cell and it changes its style accordingly (background color)
 
-// styling
+*/
 
 
 class Board extends Component {
@@ -14,13 +17,14 @@ class Board extends Component {
     this.state = {
       running: true,
       generations: 0,
-      height: 25,
-      width: 40,
+      height: 30,
+      width: 30,
       speed: 80,
       board: [],
-      boardWidth: 0
+      pixelWidth: 0
     };
 
+    // main functions
     this.buildBoard = this.buildBoard.bind(this);
     this.addCell = this.addCell.bind(this);
     this.getNextGeneration = this.getNextGeneration.bind(this);
@@ -29,14 +33,12 @@ class Board extends Component {
 
   }
 
-  // board has initial state
-  // passed alive/dead to cells randomly
-  // cells determine who their neighbors are
-
+  // build initial board, .8 for more empty than alive
   componentWillMount(){
-    this.buildBoard(this.state.height, this.state.width, .7);    
+    this.buildBoard(this.state.height, this.state.width, .8);    
   }
 
+  //build board function
   buildBoard(h, w, ratio){
     const boardsize = w * 15 + w * 2; // 15 is px size of each cell (see style), 2 accounts for borders
     const totalCells = h*w;
@@ -46,8 +48,8 @@ class Board extends Component {
       for (let j=0; j<w; j++) {
         counter++
         const alive = Math.random() > ratio ? true : false;
-        Cells.push([counter, alive]) //counter used to help determine 'position' for later
-          
+        Cells.push([counter, alive]) 
+        //counter used to help determine 'position' for later, could use index, but this felt better for dev          
           /*structure of Board: [
           [#, true],[#, false],[#, false],[#, true]...,
           [#, true],[#, false],[#, false],[#, true]...,
@@ -57,9 +59,10 @@ class Board extends Component {
           ]*/                 
       }      
     }
-    this.setState({height: h, width: w, board: Cells, boardWidth: boardsize, generations: 0})
+    this.setState({height: h, width: w, board: Cells, pixelWidth: boardsize, generations: 0})
   }
 
+  //callback for when user clicks on an empty cell (i.e. building their own setup)
   addCell(cellPos){
     let newBoard = this.state.board.map((cell, ind)=>{
       return ind === cellPos ? [cell[0], !cell[1]] : cell
@@ -68,9 +71,8 @@ class Board extends Component {
       board: newBoard
     })
   }
-
+  //check neighbors alive and return how many, used in getNextGeneration
   checkNeighbors(arr){
-    //check neighbors alive and return how many
     let alive = 0;
     arr.forEach((neighbor)=>{
       alive = neighbor[1] ? alive+1 : alive;
@@ -78,6 +80,9 @@ class Board extends Component {
     return alive;
   }  
 
+  //probably could be refactored, a lot of variables for just building neighbors
+  //I went for an infinite 'wrapping' board, i.e. rightmost col neighbors the leftmost col
+  //made it more verbose
   getNextGeneration(){
     let genContinue = false;
     let width = this.state.width;
@@ -133,18 +138,19 @@ class Board extends Component {
     }
     // corners???
     
+    //filter out any undefineds from above mapping
       neighbors = neighbors.filter((cell)=>{
         return cell !== undefined
     })
     
       let aliveNeighbors = this.checkNeighbors(neighbors)
 
-      // killing it
+      // killing the cell (this is Game of Life rule)
       if (cell[1] && (aliveNeighbors < 2 || aliveNeighbors > 3 )) {
         genContinue = true;
         return [cell[0], false]
       }      
-      // being reborn
+      // being reborn (other game of life rule)
       else if (!cell[1] && aliveNeighbors === 3) {
         genContinue = true;
         return [cell[0], true]
@@ -153,6 +159,7 @@ class Board extends Component {
         return cell
       }
     });
+    // flag genContinue necessary to stop the generations ticking
     if (genContinue) {
       this.setState({
       board: newBoard, 
@@ -160,6 +167,7 @@ class Board extends Component {
     }
   }
   
+  //button clicks to pause, clear, get a new random board, and run
   handleBtn(btn){
     switch(btn) {
       case 'Run':
@@ -176,10 +184,15 @@ class Board extends Component {
         clearInterval(this.inc)
         this.setState({running: false})
         this.buildBoard(this.state.height, this.state.width, 1)
+        break;
+      case 'Random':
+        this.buildBoard(this.state.height, this.state.width, .8)
+        break;
     }
   }
 
   render() {
+    // the actual view built from the state of board, made up of Cell components
     let boardView = this.state.board.map((cell)=>{
       return (
         <Cell 
@@ -195,22 +208,30 @@ class Board extends Component {
         <div id='ctrl-buttons'>
           <button className='btn btn-primary' onClick={(e)=>{this.handleBtn('Run')}}>Run</button>
           <button className='btn btn-primary' onClick={(e)=>{this.handleBtn('Pause')}}>Pause</button>
-          <button className='btn btn-danger' onClick={(e)=>{this.handleBtn('Clear')}}>Clear</button>
+          <button className='btn btn-primary' onClick={(e)=>{this.handleBtn('Clear')}}>Clear</button>
+          <button className='btn btn-warning' onClick={(e)=>{this.handleBtn('Random')}}>
+            <i className="fa fa-random" aria-hidden="true"></i>
+          </button>
         </div>
         <div>
           <h4>Generations: {this.state.generations}</h4>
         </div>
-        <div id='board' style={{width: this.state.boardWidth}}>
+        <div id='board' style={{width: this.state.pixelWidth}}>
           {boardView}
         </div>
         <div id='size-button'>
-          <button className='btn btn-info' onClick={(e)=>{this.buildBoard(15,30)}}>15 x 30</button>
-          <button className='btn btn-info' onClick={(e)=>{this.buildBoard(25,40)}}>25 x 40</button>
-          <button className='btn btn-info' onClick={(e)=>{this.buildBoard(40,60)}}>40 x 60</button>
+          <button className='btn btn-info' onClick={(e)=>{this.buildBoard(15,15)}} 
+          style={this.state.height === 15 ? {borderBottom: '6px solid white'}:{}}>15 x 15</button>
+          <button className='btn btn-info' onClick={(e)=>{this.buildBoard(30,30)}}
+          style={this.state.height === 30 ? {borderBottom: '6px solid white'}:{}}>30 x 30</button>
+          <button className='btn btn-info' onClick={(e)=>{this.buildBoard(40,40)}}
+          style={this.state.height === 40 ? {borderBottom: '6px solid white'}:{}}>40 x 40</button>
         </div>
       </div>
     );
   }
+
+  //interval initializing
   componentDidMount(){
     if (this.state.running) {
       this.inc = setInterval(this.getNextGeneration, this.state.speed);
