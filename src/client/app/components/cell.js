@@ -17,7 +17,7 @@ class Cell extends Component {
     return (
       <div id='cell'
       onClick={(e) =>{this.handleClick(this.props.position)}}
-      style={this.props.alive ? {backgroundColor: 'orange'}:{}}>
+      style={this.props.alive ? {backgroundColor: '#9933cc'}:{}}>
       </div>
     );
   }

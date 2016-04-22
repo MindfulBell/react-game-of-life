@@ -1,12 +1,7 @@
 import React, {Component} from 'react';
 import Cell from './cell';
 
-// TO DO: How do I get it to incremenet properly with a timer/setInterval? 
-// it works on a click of a button...
-
 // wrap the neighbors of cells on the edge...?
-
-// buttons to run/pause/clear
 
 // draw your pattern instead of click?
 
@@ -17,20 +12,20 @@ class Board extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      status: 'running',
+      running: true,
       generations: 0,
-      height: 4,
-      width: 4,
-      speed: 1000,
+      height: 25,
+      width: 40,
+      speed: 80,
       board: [],
       boardWidth: 0
     };
 
     this.buildBoard = this.buildBoard.bind(this);
     this.addCell = this.addCell.bind(this);
-    // this.updateBoard = this.updateBoard.bind(this);
-    this.generation = this.getNextGeneration.bind(this);
+    this.getNextGeneration = this.getNextGeneration.bind(this);
     this.checkNeighbors = this.checkNeighbors.bind(this);
+    this.handleBtn = this.handleBtn.bind(this);
 
   }
 
@@ -39,10 +34,10 @@ class Board extends Component {
   // cells determine who their neighbors are
 
   componentWillMount(){
-    this.buildBoard(this.state.height, this.state.width);    
+    this.buildBoard(this.state.height, this.state.width, .7);    
   }
 
-  buildBoard(h,w){
+  buildBoard(h, w, ratio){
     const boardsize = w * 15 + w * 2; // 15 is px size of each cell (see style), 2 accounts for borders
     const totalCells = h*w;
     const Cells = [];
@@ -50,7 +45,7 @@ class Board extends Component {
     for (let i=0; i<h; i++) {
       for (let j=0; j<w; j++) {
         counter++
-        const alive = Math.random() > .7 ? true : false;
+        const alive = Math.random() > ratio ? true : false;
         Cells.push([counter, alive]) //counter used to help determine 'position' for later
           
           /*structure of Board: [
@@ -62,7 +57,7 @@ class Board extends Component {
           ]*/                 
       }      
     }
-    this.setState({height: h, width: w, board: Cells, boardWidth: boardsize})
+    this.setState({height: h, width: w, board: Cells, boardWidth: boardsize, generations: 0})
   }
 
   addCell(cellPos){
@@ -83,16 +78,18 @@ class Board extends Component {
     return alive;
   }  
 
-  // updateBoard(newBoard){
-  //   this.setState({
-  //     board: newBoard
-  //   })
-  // }
-
   getNextGeneration(){
+    let genContinue = false;
+    let width = this.state.width;
+    let height = this.state.height;
+    let topLft = 0;
+    let topRt = width-1;
+    let botLft = height*width-width;
+    let botRt = height*width-1;
+    let edgeRows = width*(height-1);
+    let edgeCols = (height-1);
     let newBoard = this.state.board.map((cell,_,arr)=>{
       let neighbors = [];    
-      let width = this.state.width;      
       neighbors.push(
         arr[cell[0]-width-1],
         arr[cell[0]-width],
@@ -101,81 +98,85 @@ class Board extends Component {
         arr[cell[0]+1],
         arr[cell[0]+width-1],
         arr[cell[0]+width],
-        arr[cell[0]+width+1])      
+        arr[cell[0]+width+1])
+      //top row
+    if (cell[0] >= topLft && cell[0] <= topRt) {
+      neighbors.push(
+        arr[cell[0]+edgeRows-1],
+        arr[cell[0]+edgeRows],
+        arr[cell[0]+edgeRows+1]
+        )
+    }
+      //bot row
+    if (cell[0] > botLft && cell[0] < botRt) {
+      neighbors.push(
+        arr[cell[0]-edgeRows-1],
+        arr[cell[0]-edgeRows],
+        arr[cell[0]-edgeRows+1]
+        )
+    }
+    //left col
+    if (cell[0]%width === 0) {
+      neighbors.push(
+        arr[cell[0]+edgeCols-width],
+        arr[cell[0]+edgeCols],
+        arr[cell[0]+edgeCols+width]
+        )
+    }
+    //right col
+    if ((cell[0]+1)%width === 0){
+      neighbors.push(
+        arr[cell[0]-edgeCols-width],
+        arr[cell[0]-edgeCols],
+        arr[cell[0]-edgeCols+width]
+        )
+    }
+    // corners???
+    
       neighbors = neighbors.filter((cell)=>{
         return cell !== undefined
     })
+    
       let aliveNeighbors = this.checkNeighbors(neighbors)
 
       // killing it
       if (cell[1] && (aliveNeighbors < 2 || aliveNeighbors > 3 )) {
+        genContinue = true;
         return [cell[0], false]
       }      
-      //being reborn
+      // being reborn
       else if (!cell[1] && aliveNeighbors === 3) {
+        genContinue = true;
         return [cell[0], true]
       }
       else {
         return cell
       }
-    });  
-
-    
-
-    // let topLft = 0;
-    // let topRt = width-1;
-    // let botLft = height*width-width;
-    // let botRt = height*width-1;
-    // let edgeRows = width*(height-1);
-    // let edgeCols = (height-1);
-
-    //WRAPPING NEIGHBORS?
-
-    // //corners
-    // switch (cell[0]) {
-    //   //corner
-    //   case topLft:
-    //   case topRt:
-    //   case botLft:
-    //   case botRt:
-    //     neighbors.push()
-    // }
-
-    // //top row
-    // if (cell[0] >= topLft && cell[0] <= topRt) {
-    //   neighbors.push(
-    //   board[cell[0]+edgeRows-1],
-    //   board[cell[0]+edgeRows],
-    //   board[cell[0]+edgeRows+1]
-    //   )
-    // }
-    // //bottom row
-    // if (cell[0] > botLft && cell[0] < botRt) {
-    //   neighbors.push(
-    //   board[cell[0]-edgeRows-1],
-    //   board[cell[0]-edgeRows],
-    //   board[cell[0]-edgeRows+1]
-    //   )
-    // }
-    // //left col
-    // if (cell[0]%width === 0) {
-    //   neighbors.push(
-    //   board[cell[0]+edgeCols-width],
-    //   board[cell[0]+edgeCols],
-    //   board[cell[0]+edgeCols+width]
-    //   )
-    // }
-    // //right col
-    // if ((cell[0]+1)%width === 0){
-    //   neighbors.push(
-    //   board[cell[0]-edgeCols-width],
-    //   board[cell[0]-edgeCols],
-    //   board[cell[0]-edgeCols+width]
-    //   )
-    // }
-    //go through each cell to check if alive/dead
-    this.setState({board: newBoard})
-    return newBoard;
+    });
+    if (genContinue) {
+      this.setState({
+      board: newBoard, 
+      generations: this.state.generations + 1});
+    }
+  }
+  
+  handleBtn(btn){
+    switch(btn) {
+      case 'Run':
+        if (!this.state.running) {
+          this.inc = setInterval(this.getNextGeneration, this.state.speed)
+          this.setState({running: true})
+        }
+        break;
+      case 'Pause':
+        clearInterval(this.inc)
+        this.setState({running: false})
+        break;
+      case 'Clear':
+        clearInterval(this.inc)
+        this.setState({running: false})
+        this.buildBoard(this.state.height, this.state.width, 1)
+    }
   }
 
   render() {
@@ -192,27 +193,28 @@ class Board extends Component {
     return (
       <div>
         <div id='ctrl-buttons'>
-          <button onClick={(e)=>{this.getNextGeneration()}}>Run</button>
-          <button>Pause</button>
-          <button>Clear</button>
+          <button className='btn btn-primary' onClick={(e)=>{this.handleBtn('Run')}}>Run</button>
+          <button className='btn btn-primary' onClick={(e)=>{this.handleBtn('Pause')}}>Pause</button>
+          <button className='btn btn-danger' onClick={(e)=>{this.handleBtn('Clear')}}>Clear</button>
         </div>
         <div>
-          Generations: {this.state.generations}
+          <h4>Generations: {this.state.generations}</h4>
         </div>
         <div id='board' style={{width: this.state.boardWidth}}>
           {boardView}
         </div>
         <div id='size-button'>
-          <button onClick={(e)=>{this.buildBoard(15,30)}}>15 x 30</button>
-          <button onClick={(e)=>{this.buildBoard(25,40)}}>25 x 40</button>
-          <button onClick={(e)=>{this.buildBoard(40,60)}}>40 x 60</button>
+          <button className='btn btn-info' onClick={(e)=>{this.buildBoard(15,30)}}>15 x 30</button>
+          <button className='btn btn-info' onClick={(e)=>{this.buildBoard(25,40)}}>25 x 40</button>
+          <button className='btn btn-info' onClick={(e)=>{this.buildBoard(40,60)}}>40 x 60</button>
         </div>
       </div>
     );
   }
-
   componentDidMount(){
-    this.inc = setInterval(this.getNextGeneration, this.state.speed)
+    if (this.state.running) {
+      this.inc = setInterval(this.getNextGeneration, this.state.speed);
+    }
   }
 }
 

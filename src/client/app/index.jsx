@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 import {render} from 'react-dom';
 import Board from './components/board';
+require('bootstrap/dist/css/bootstrap.css');
 import style from '../public/css/style.scss';
 
 class App extends Component {
